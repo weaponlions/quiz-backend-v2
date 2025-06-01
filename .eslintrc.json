@@ -1,0 +1,46 @@
+{
+  "env": {
+    "node": true,
+    "es2021": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:node/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "project": "./tsconfig.json",
+    "sourceType": "module",
+    "ecmaFeatures": {
+        "jsx": false
+    }
+  },
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "rules": {
+    "no-console": "warn",
+    "no-debugger": "warn",
+    "import/prefer-default-export": "off",
+    "no-unused-vars": "off", 
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "import/no-unresolved": "error",
+    "import/named": "error",
+    "import/default": "error",
+    "import/namespace": "error",
+    "node/no-missing-import": "error",
+    "node/no-unpublished-import": "error",
+    "node/no-unsupported-features/es-syntax": "off",
+    "@typescript-eslint/no-unused-vars": "error",  
+    "@typescript-eslint/explicit-function-return-type": "warn"   
+  },
+  "settings": {
+    "node": {
+      "tryExtensions": [".ts", ".js", ".json", ".node"]
+    }
+  }
+}

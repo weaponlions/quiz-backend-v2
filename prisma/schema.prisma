@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:Harsh12%40@localhost:3306/quizz"
+}
+
+enum userTypeEnum {
+  ADMIN
+  CREATOR
+  STUDENT
+}
+
+enum correctAnswerEnum {
+  A
+  B
+  C
+  D
+}
+
+enum difficultyEnum {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id                Int               @id @default(autoincrement())
+  username          String            @unique @db.VarChar(100)
+  password          String            @db.VarChar(100)
+  email             String            @unique
+  phone             String?
+  preferredLanguage String?
+  board             String?
+  userType          userTypeEnum      @default(STUDENT)
+  isActive          Boolean           @default(true)
+
+  testAttempts      TestAttempt[]
+  questionLogs      UserQuestionLog[]
+}
+
+model Subject {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  topics      Topic[]
+  questions   Question[]
+  exams       ExamSubject[]
+  tests       Test[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Topic {
+  id          Int         @id @default(autoincrement())
+  subjectId   Int
+  name        String
+  questions   Question[]
+  tests       Test[]
+  
+  subject     Subject     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([subjectId, name])
+}
+
+model Exam {
+  id          Int         @id @default(autoincrement())
+  name        String      
+  board       String?     
+  level       String?
+  isActive    Boolean     @default(true)
+  tests       Test[]
+  questions   Question[]
+  subjects    ExamSubject[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model ExamSubject {
+  id          Int       @id @default(autoincrement())
+  examId      Int
+  subjectId   Int
+  exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  subject     Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([examId, subjectId])
+}
+
+model Test {
+  id               Int           @id @default(autoincrement())
+  name             String
+  examId           Int?
+  subjectId        Int?
+  topicId          Int?
+  durationMinutes  Int
+  isLive           Boolean       @default(false)
+  
+  exam             Exam?         @relation(fields: [examId], references: [id])
+  subject          Subject?      @relation(fields: [subjectId], references: [id])
+  topic            Topic?        @relation(fields: [topicId], references: [id])
+  testAttempts     TestAttempt[]
+  testQuestions    TestQuestion[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([examId, subjectId, topicId])
+}
+
+model Question {
+  id               Int                    @id @default(autoincrement())
+  examId           Int?
+  subjectId        Int
+  topicId          Int
+  difficulty       difficultyEnum
+  
+  exam             Exam?                  @relation(fields: [examId], references: [id])
+  subject          Subject                @relation(fields: [subjectId], references: [id])
+  topic            Topic                  @relation(fields: [topicId], references: [id])
+  translations     QuestionTranslation[]
+  testQuestions    TestQuestion[]
+  attemptAnswers   AttemptAnswer[]
+  questionLogs     UserQuestionLog[]
+  questionPools    QuestionPool[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@index([examId, subjectId, topicId, difficulty])
+}
+
+model QuestionPool {
+  id          Int             @id @default(autoincrement())
+  questionId  Int
+  examId      Int?
+  subjectId   Int?
+  topicId     Int?
+  difficulty  difficultyEnum?
+  
+  question    Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([examId, subjectId, topicId, difficulty])
+}
+
+model QuestionTranslation {
+  id              Int               @id @default(autoincrement())
+  questionId      Int
+  language        String
+  questionText    String            @db.Text
+  optionA         String            @db.Text
+  optionB         String            @db.Text
+  optionC         String            @db.Text
+  optionD         String            @db.Text
+  correctOption   correctAnswerEnum
+  explanation     String?           @db.Text
+  
+  question        Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([questionId, language])
+}
+
+model TestQuestion {
+  id          Int      @id @default(autoincrement())
+  testId      Int
+  questionId  Int
+  position    Int
+  
+  test        Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([testId, position])
+  @@index([testId, questionId])
+}
+
+model TestAttempt {
+  id            Int               @id @default(autoincrement())
+  testId        Int
+  userId        Int
+  startedAt     DateTime          @default(now())
+  submittedAt   DateTime?
+  score         Float?
+  
+  test          Test              @relation(fields: [testId], references: [id], onDelete: Cascade)
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers       AttemptAnswer[]
+
+  @@index([userId, testId])
+}
+
+model AttemptAnswer {
+  id             Int               @id @default(autoincrement())
+  attemptId      Int
+  questionId     Int
+  selectedOption correctAnswerEnum?
+  isCorrect      Boolean?
+  
+  attempt        TestAttempt       @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       Question          @relation(fields: [questionId], references: [id])
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId, questionId])
+}
+
+model UserQuestionLog {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  questionId  Int
+  seenAt      DateTime  @default(now())
+  
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question    Question  @relation(fields: [questionId], references: [id])
+
+  @@unique([userId, questionId])
+  @@index([userId, questionId])
+}
+
