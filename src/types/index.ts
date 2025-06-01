@@ -1,10 +1,10 @@
-import { correctAnswerEnum, userTypeEnum } from "@prisma/client";
+import { correctAnswerEnum, userTypeEnum, difficultyEnum } from "@prisma/client";
 
-export enum difficultyEnum {
-  EASY = "EASY",
-  MEDIUM = "MEDIUM",
-  HARD = "HARD"
-}
+// export enum difficultyEnum {
+//   EASY = "EASY",
+//   MEDIUM = "MEDIUM",
+//   HARD = "HARD"
+// }
 
 export enum ExamBoardTypeEnum {
     SPECIAL = "SPECIAL",
@@ -81,7 +81,7 @@ export type Test = {
 
 export type Question = {
   id?: number;
-  examId?: number;
+  examId?: number | null;
   subjectId: number;
   topicId: number;
   difficulty: difficultyEnum;

@@ -78,7 +78,7 @@ export const getSubjects = async (req: Request, res: Response) => {
         });
 
         return res.status(StatusCode.OK).json(
-            jsonResponse<any[]>({ 
+            jsonResponse<Subject[]>({ 
                 code: StatusCode.OK, 
                 data: subjects, 
                 message: "Subjects retrieved successfully" 
@@ -330,88 +330,8 @@ export const getSubject = async (req: Request, res: Response) => {
     try {
       const prisma = new PrismaClient();
       let query: { where: any } = { where: {} };
-  
-      if (!isObjectEmpty(req.query)) {
-        const {
-          subjectName,
-          examId,
-          active,
-        }: { subjectName?: string; examId?: number; active?: string } =
-          req.query as any;
-  
-        const queryArr: any[] = [];
-  
-        // Validate inputs
-        const { error: nameError, value: subjectValue } = Joi.string().validate(subjectName);
-        const { error: examError, value: examIdValue } = Joi.number().validate(examId);
-        const { error: activeError, value: activeValue } = Joi.boolean().truthy("true").falsy("false").validate(active);
-  
-        if (nameError && subjectName) {
-          res.status(StatusCode.BAD_REQUEST).json(
-            jsonResponse<[]>({
-              code: StatusCode.BAD_REQUEST,
-              data: [],
-              message: "Invalid query parameter: subjectName",
-              other: nameError.details,
-            })
-          );
-          return
-        }
-  
-        if (examError && examId) {
-          res.status(StatusCode.BAD_REQUEST).json(
-            jsonResponse<[]>({
-              code: StatusCode.BAD_REQUEST,
-              data: [],
-              message: "Invalid query parameter: examId",
-              other: examError.details,
-            })
-          );
-          return
-        }
-  
-        if (activeError && active !== undefined) {
-          res.status(StatusCode.BAD_REQUEST).json(
-            jsonResponse<[]>({
-              code: StatusCode.BAD_REQUEST,
-              data: [],
-              message: "Invalid query parameter: active",
-              other: activeError.details,
-            })
-          );
-          return
-        }
-  
-        if (!nameError && subjectName) {
-          queryArr.push({
-            subjectName: {
-              contains: subjectValue,
-              mode: "insensitive", // optional: makes it case-insensitive
-            },
-          });
-        }
-  
-        if (!examError && examId) {
-          queryArr.push({
-            examId: examIdValue,
-          });
-        }
-  
-        if (!activeError && active !== undefined) {
-          queryArr.push({
-            active: activeValue,
-          });
-        }
-  
-        // Combine all conditions
-        if (queryArr.length > 0) {
-          query.where = {
-            ...queryArr.reduce((acc, item) => ({ ...acc, ...item }), {}),
-          };
-        }
-      }
-  
-      const subjects = await prisma.examSubject.findMany(query);
+
+      const subjects = await prisma.subject.findMany(query);
   
       res.status(StatusCode.OK).json(
         jsonResponse<Subject[]>({

@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { correctAnswerEnum, userTypeEnum } from "@prisma/client";
+import { correctAnswerEnum, userTypeEnum, difficultyEnum  } from "@prisma/client";
 import { 
   User, 
   Subject, 
@@ -14,7 +14,7 @@ import {
   AttemptAnswer, 
   UserQuestionLog, 
   QuestionPool,
-  difficultyEnum
+  // difficultyEnum
 } from "../types";
 
 export const userSchema = Joi.object<User>({
