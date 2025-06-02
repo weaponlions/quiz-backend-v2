@@ -6,7 +6,10 @@
       "build": "tsc",
       "start": "npx tsx watch src/index.ts",
       "lint": "eslint src/**/*.ts",
-      "lint:fix": "eslint src/**/*.ts --fix"
+      "lint:fix": "eslint src/**/*.ts --fix",
+      "migrate": "npx prisma migrate dev",
+      "generate": "npx prisma generate",
+      "seed": "ts-node prisma/seed.ts"
    },
    "keywords": [],
    "author": "",
@@ -36,6 +39,7 @@
       "typescript": "^5.8.2"
    },
    "dependencies": {
+      "@faker-js/faker": "^9.8.0",
       "@prisma/client": "^6.8.2",
       "bcrypt": "^5.1.1",
       "cors": "^2.8.5",
