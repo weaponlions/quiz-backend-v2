@@ -29,7 +29,7 @@ export type User = {
   email: string;
   phone?: string | null;
   preferredLanguage?: string | null;
-  board?: string | null;
+  exam?: string | null;
   userType: userTypeEnum;
   isActive?: boolean;
 };
@@ -99,10 +99,14 @@ export type QuestionTranslation = {
   optionC: string;
   optionD: string;
   correctOption: correctAnswerEnum;
-  explanation?: string;
+  explanation?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
+
+export interface QuestionModel extends Question {
+  translations?: QuestionTranslation[]
+}
 
 export type TestQuestion = {
   id?: number;

@@ -16,11 +16,10 @@ export const createTopic = async (req: Request, res: Response) => {
             return
         }
 
-        await prisma.subjectTopic.create({
+        await prisma.topic.create({
             data: {
-                topicName: joiResult.value.topicName,
-                subject: { connect: { id: Number(joiResult.value.subjectId) } },
-                active: Boolean(joiResult.value.active)
+                name: joiResult.value.name,
+                subject: { connect: { id: Number(joiResult.value.subjectId) } }
             }
         }).then((value) => {
             res.status(StatusCode.CREATED).json(jsonResponse<Topic[]>({ code: StatusCode.CREATED, data: [value], message: "Topic created successfully" }))
@@ -81,12 +80,11 @@ export const editTopic = async (req: Request, res: Response) => {
   }
 
   try {
-    const updatedTopic = await prisma.subjectTopic.update({
+    const updatedTopic = await prisma.topic.update({
       where: { id: topicId },
       data: {
-        topicName: value.topicName,
-        subject: { connect: { id: value.subjectId } },
-        active: value.active,
+        name: value.name,
+        subject: { connect: { id: value.subjectId } }
       },
     });
 
@@ -134,7 +132,7 @@ export const getTopic = async (req: Request, res: Response) => {
             }
             if (search) {
                 queryArr.push({
-                    topicName: {
+                    name: {
                         contains: searchValue
                     },
                 })
@@ -158,7 +156,7 @@ export const getTopic = async (req: Request, res: Response) => {
         }
         console.log(query)
         console.log(typeof query.where !== "undefined" ? query : {})
-        await prisma.subjectTopic.findMany(typeof query.where !== "undefined" ? query as Object : {})
+        await prisma.topic.findMany(typeof query.where !== "undefined" ? query as Object : {})
             .then((value) => {
                 res.status(StatusCode.OK).json(jsonResponse<Topic[]>({ code: StatusCode.OK, data: value, message: "Topic list" }))
 

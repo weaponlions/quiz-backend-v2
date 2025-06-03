@@ -100,7 +100,7 @@ export const getQuestionTranslations = async (req: Request, res: Response) => {
         if (questionId) {
             const { error, value } = Joi.number().validate(questionId);
             if (!error) {
-                whereClause.questionId = parseInt(value);
+                whereClause.questionId = Number(value);
             }
         }
 
