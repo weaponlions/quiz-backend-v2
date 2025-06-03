@@ -14,7 +14,7 @@ async function main() {
           email: faker.internet.email(),
           phone: faker.phone.number(),
           preferredLanguage: faker.helpers.arrayElement(['en', 'hi']),
-          board: faker.helpers.arrayElement(['UPSE', 'SSC', 'CENTRAL']),
+          exam: faker.helpers.arrayElement(['SSc CGL', 'SSC MAIN', 'CENTRAL']),
           userType: userTypeEnum.STUDENT,
           isActive: true,
         },

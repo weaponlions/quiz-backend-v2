@@ -21,7 +21,9 @@ export const createUser = async (req: Request, res: Response) => {
                 username: joiResult.value.username,
                 email: joiResult.value.email,
                 password: joiResult.value.password,
-                userType: joiResult.value.userType             
+                userType: joiResult.value.userType,
+                exam: joiResult.value.exam,
+                preferredLanguage: joiResult.value.preferredLanguage
             }
         }).then((value) => {
             res.status(StatusCode.CREATED).json(jsonResponse<User[]>({ code: StatusCode.CREATED, data: [value], message: "User created successfully" }))
@@ -167,8 +169,9 @@ export const updateUser = async (req: Request, res: Response) => {
             data: {
                 username: joiResult.value.username,
                 email: joiResult.value.email,
-                password: joiResult.value.password,
-                userType: joiResult.value.userType
+                password: joiResult.value.password, 
+                exam: joiResult.value.exam,
+                preferredLanguage: joiResult.value.preferredLanguage
             }
         });
 

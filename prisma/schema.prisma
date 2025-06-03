@@ -33,7 +33,7 @@ model User {
   email             String            @unique
   phone             String?
   preferredLanguage String?
-  board             String?
+  exam              String?
   userType          userTypeEnum      @default(STUDENT)
   isActive          Boolean           @default(true)
 
@@ -126,10 +126,20 @@ model Question {
   attemptAnswers   AttemptAnswer[]
   questionLogs     UserQuestionLog[]
   questionPools    QuestionPool[]
+  questionAppears    QuestionAppear[]
   createdAt        DateTime               @default(now())
   updatedAt        DateTime               @updatedAt
 
   @@index([examId, subjectId, topicId, difficulty])
+}
+
+model QuestionAppear {
+  id               Int                    @id @default(autoincrement())
+  whenAppear       Int
+  questionId       Int
+  question         Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  examId           Int?
+  createdAt        DateTime               @default(now())
 }
 
 model QuestionPool {

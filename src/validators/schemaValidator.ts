@@ -14,6 +14,7 @@ import {
   AttemptAnswer, 
   UserQuestionLog, 
   QuestionPool,
+  QuestionModel,
   // difficultyEnum
 } from "../types";
 
@@ -23,7 +24,7 @@ export const userSchema = Joi.object<User>({
   email: Joi.string().email().required(),
   phone: Joi.string().allow(null, ''),
   preferredLanguage: Joi.string().allow(null, ''),
-  board: Joi.string().allow(null, ''),
+  exam: Joi.string().allow(null, ''),
   userType: Joi.string().valid(...Object.values(userTypeEnum)).default('STUDENT'),
   isActive: Joi.boolean().default(true)
 });
@@ -62,15 +63,8 @@ export const testSchema = Joi.object<Test>({
   isLive: Joi.boolean().default(false)
 });
 
-export const questionSchema = Joi.object<Question>({
-  examId: Joi.number().allow(null),
-  subjectId: Joi.number().required(),
-  topicId: Joi.number().required(),
-  difficulty: Joi.string().valid(...Object.values(difficultyEnum)).required()
-});
-
 export const questionTranslationSchema = Joi.object<QuestionTranslation>({
-  questionId: Joi.number().required(),
+  questionId: Joi.number().allow(null),
   language: Joi.string().required(),
   questionText: Joi.string().required(),
   optionA: Joi.string().required(),
@@ -79,6 +73,21 @@ export const questionTranslationSchema = Joi.object<QuestionTranslation>({
   optionD: Joi.string().required(),
   correctOption: Joi.string().valid(...Object.values(correctAnswerEnum)).required(),
   explanation: Joi.string().allow(null, '')
+});
+
+export const questionSchema = Joi.object<Question>({
+  examId: Joi.number().allow(null),
+  subjectId: Joi.number().required(),
+  topicId: Joi.number().required(),
+  difficulty: Joi.string().valid(...Object.values(difficultyEnum)).required()
+});
+
+export const questionModelSchema = Joi.object<QuestionModel>({
+  examId: Joi.number().allow(null),
+  subjectId: Joi.number().required(),
+  topicId: Joi.number().required(),
+  difficulty: Joi.string().valid(...Object.values(difficultyEnum)).required(),
+  translations: Joi.array().items(questionTranslationSchema),
 });
 
 export const testQuestionSchema = Joi.object<TestQuestion>({
