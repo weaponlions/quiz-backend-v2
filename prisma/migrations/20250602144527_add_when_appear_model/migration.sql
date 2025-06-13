@@ -4,11 +4,6 @@
   - You are about to drop the column `board` on the `user` table. All the data in the column will be lost.
 
 */
--- DropIndex
-DROP INDEX `Exam_name_key` ON `exam`;
-
--- AlterTable
-ALTER TABLE `exam` ADD COLUMN `board` VARCHAR(191) NULL;
 
 -- AlterTable
 ALTER TABLE `user` DROP COLUMN `board`,

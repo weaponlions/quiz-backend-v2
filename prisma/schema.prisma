@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://root:Harsh12%40@localhost:3306/quizz"
+  url      = "mysql://root:@localhost:3306/quizz"
 }
 
 enum userTypeEnum {
