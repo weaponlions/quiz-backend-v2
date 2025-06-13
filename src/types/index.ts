@@ -87,6 +87,7 @@ export type Question = {
   difficulty: difficultyEnum;
   createdAt?: Date;
   updatedAt?: Date;
+  translations?: QuestionTranslation[];
 };
 
 export type QuestionTranslation = {

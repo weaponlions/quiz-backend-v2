@@ -164,8 +164,8 @@ model QuestionTranslation {
   questionText    String            @db.Text
   optionA         String            @db.Text
   optionB         String            @db.Text
-  optionC         String            @db.Text
-  optionD         String            @db.Text
+  optionC         String?           @db.Text
+  optionD         String?           @db.Text
   correctOption   correctAnswerEnum
   explanation     String?           @db.Text
   

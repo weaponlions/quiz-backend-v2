@@ -69,8 +69,8 @@ export const questionTranslationSchema = Joi.object<QuestionTranslation>({
   questionText: Joi.string().required(),
   optionA: Joi.string().required(),
   optionB: Joi.string().required(),
-  optionC: Joi.string().required(),
-  optionD: Joi.string().required(),
+  optionC: Joi.string().allow(null),
+  optionD: Joi.string().allow(null),
   correctOption: Joi.string().valid(...Object.values(correctAnswerEnum)).required(),
   explanation: Joi.string().allow(null, '')
 });
@@ -86,8 +86,8 @@ export const questionModelSchema = Joi.object<QuestionModel>({
   examId: Joi.number().allow(null),
   subjectId: Joi.number().required(),
   topicId: Joi.number().required(),
-  difficulty: Joi.string().valid(...Object.values(difficultyEnum)).required(),
-  translations: Joi.array().items(questionTranslationSchema),
+  difficulty: Joi.string().valid(...Object.values(difficultyEnum)).default("EASY"),
+  translations: Joi.array().required().items(questionTranslationSchema).min(1)
 });
 
 export const testQuestionSchema = Joi.object<TestQuestion>({

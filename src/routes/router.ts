@@ -18,14 +18,14 @@ router.use("/exam", examRoutes);
 router.use("/subject", subjectRoutes);
 router.use("/topic", topicRoutes);
 router.use("/round", roundRoutes);
-router.use("/question", questionRoutes);
+// router.use("/question", questionRoutes);
 router.use("/user", userRoutes);
 
 // New routes
-router.use("/api/questions", newQuestionRoutes);
-router.use("/api/question-translations", questionTranslationRoutes);
-router.use("/api/tests", testRoutes);
-router.use("/api/test-questions", testQuestionRoutes);
-router.use("/api/test-attempts", testAttemptRoutes);
+router.use("/question", newQuestionRoutes);
+router.use("/question-translation", questionTranslationRoutes);
+router.use("/tests", testRoutes);
+router.use("/test-questions", testQuestionRoutes);
+router.use("/test-attempts", testAttemptRoutes);
 
 export default router;

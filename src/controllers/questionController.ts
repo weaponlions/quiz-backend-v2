@@ -1,16 +1,17 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { Question, StatusCode } from "../types";
-import { questionSchema } from "../validators/schemaValidator";
+import { questionModelSchema, questionSchema } from "../validators/schemaValidator";
 import { isObjectEmpty, jsonResponse } from "../helpers";
 import Joi from "joi";
+import { createQuestionTranslation } from "../services/translationService";
 
 // Create a single instance of PrismaClient to reuse
 const prisma = new PrismaClient();
 
 export const createQuestion = async (req: Request, res: Response) => {
     try {
-        const joiResult = questionSchema.validate(req.body, { abortEarly: false });
+        const joiResult = questionModelSchema.validate(req.body, { abortEarly: false });
         if (joiResult.error) {
             return res.status(StatusCode.BAD_REQUEST).json(
                 jsonResponse<[]>({ 
@@ -21,51 +22,49 @@ export const createQuestion = async (req: Request, res: Response) => {
             );
         }
 
-        const { examId, subjectId, topicId, difficulty } = joiResult.value;
+        const { examId, subjectId, topicId, difficulty, translations } = joiResult.value;
 
-        // Verify subject exists
+        // Check subject exists
         const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
         if (!subject) {
             return res.status(StatusCode.BAD_REQUEST).json(
-                jsonResponse<[]>({ 
-                    code: StatusCode.BAD_REQUEST, 
-                    data: [], 
-                    message: "Subject not found" 
+                jsonResponse<[]>({
+                    code: StatusCode.BAD_REQUEST,
+                    data: [],
+                    message: "Subject not found"
                 })
             );
         }
 
-        // Verify topic exists and belongs to the subject
+        // Check topic exists and belongs to subject
         const topic = await prisma.topic.findUnique({ 
-            where: { 
-                id: topicId,
-                subjectId: subjectId
-            } 
+            where: { id: topicId, subjectId }
         });
         if (!topic) {
             return res.status(StatusCode.BAD_REQUEST).json(
-                jsonResponse<[]>({ 
-                    code: StatusCode.BAD_REQUEST, 
-                    data: [], 
-                    message: "Topic not found or doesn't belong to the specified subject" 
+                jsonResponse<[]>({
+                    code: StatusCode.BAD_REQUEST,
+                    data: [],
+                    message: "Topic not found or doesn't belong to the specified subject"
                 })
             );
         }
 
-        // Verify exam exists if provided
+        // Check exam exists (optional)
         if (examId) {
             const exam = await prisma.exam.findUnique({ where: { id: examId } });
             if (!exam) {
                 return res.status(StatusCode.BAD_REQUEST).json(
-                    jsonResponse<[]>({ 
-                        code: StatusCode.BAD_REQUEST, 
-                        data: [], 
-                        message: "Exam not found" 
+                    jsonResponse<[]>({
+                        code: StatusCode.BAD_REQUEST,
+                        data: [],
+                        message: "Exam not found"
                     })
                 );
             }
         }
 
+        // Create question
         const newQuestion = await prisma.question.create({
             data: {
                 examId,
@@ -75,24 +74,52 @@ export const createQuestion = async (req: Request, res: Response) => {
             }
         });
 
-        return res.status(StatusCode.CREATED).json(
-            jsonResponse<Question[]>({ 
-                code: StatusCode.CREATED, 
-                data: [newQuestion], 
-                message: "Question created successfully" 
+        // Inject questionId into each translation
+        const translationInput = translations?.map(t => ({
+            ...t,
+            questionId: newQuestion.id
+        })) || [];
+
+        // Call service
+        const translationResult = await createQuestionTranslation(translationInput);
+
+        
+        if (translationResult.status === StatusCode.BAD_REQUEST) {
+            // Rollback question creation if all translations failed
+            await prisma.question.delete({ where: { id: newQuestion.id } });
+
+            return res.status(StatusCode.BAD_REQUEST).json(
+                jsonResponse<[]>({
+                    code: StatusCode.BAD_REQUEST,
+                    data: [],
+                    message: "All translations failed, question creation rolled back",
+                })
+            );
+        }
+
+        // Return full context to the client
+        return res.status(translationResult.status).json(
+            jsonResponse<any>({
+                code: translationResult.status,
+                data: {
+                    question: newQuestion,
+                    translations: translationResult.results
+                },
+                message: translationResult.message
             })
         );
     } catch (error) {
         console.error("Error creating question:", error);
         return res.status(StatusCode.INTERNAL_SERVER_ERROR).json(
-            jsonResponse<[]>({ 
-                code: StatusCode.INTERNAL_SERVER_ERROR, 
-                data: [], 
-                message: "An unexpected error occurred" 
+            jsonResponse<[]>({
+                code: StatusCode.INTERNAL_SERVER_ERROR,
+                data: [],
+                message: "An unexpected error occurred"
             })
         );
     }
 };
+
 
 export const getQuestions = async (req: Request, res: Response) => {
     try {
@@ -380,3 +407,122 @@ export const deleteQuestion = async (req: Request, res: Response) => {
         );
     }
 }; 
+
+
+export const importQuestions = async (req: Request, res: Response) => {
+    try {
+        const questionList = req.body;
+
+        if (!Array.isArray(questionList) || questionList.length === 0) {
+            return res.status(StatusCode.BAD_REQUEST).json(
+                jsonResponse({ 
+                    code: StatusCode.BAD_REQUEST, 
+                    data: [], 
+                    message: "Body must be a non-empty array of questions"
+                })
+            );
+        }
+
+        const results = [];
+
+        for (const item of questionList) {
+            const validation = questionModelSchema.validate(item, { abortEarly: false });
+
+            if (validation.error) {
+                results.push({
+                    input: item,
+                    success: false,
+                    message: validation.error.details,
+                });
+                continue;
+            }
+
+            const { examId, subjectId, topicId, difficulty, translations } = validation.value;
+
+            // Validate subject
+            const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
+            if (!subject) {
+                results.push({
+                    input: item,
+                    success: false,
+                    message: "Subject not found",
+                });
+                continue;
+            }
+
+            // Validate topic
+            const topic = await prisma.topic.findUnique({
+                where: {
+                    id: topicId,
+                    subjectId: subjectId,
+                }
+            });
+
+            if (!topic) {
+                results.push({
+                    input: item,
+                    success: false,
+                    message: "Topic not found or doesn't belong to the subject",
+                });
+                continue;
+            }
+
+            // Validate exam (optional)
+            if (examId) {
+                const exam = await prisma.exam.findUnique({ where: { id: examId } });
+                if (!exam) {
+                    results.push({
+                        input: item,
+                        success: false,
+                        message: "Exam not found",
+                    });
+                    continue;
+                }
+            }
+
+            // Create Question
+            const newQuestion = await prisma.question.create({
+                data: {
+                    examId,
+                    subjectId,
+                    topicId,
+                    difficulty,
+                }
+            });
+
+            // Add questionId to each translation
+            const translationPayload = translations?.map(t => ({
+                ...t,
+                questionId: newQuestion.id,
+            })) ?? [];
+
+            const translationResult = await createQuestionTranslation(translationPayload);
+
+            results.push({
+                input: item,
+                success: translationResult.success,
+                message: translationResult.message,
+                questionId: newQuestion.id,
+                translationResults: translationResult.results,
+            });
+        }
+
+        return res.status(StatusCode.OK).json(
+            jsonResponse({
+                code: StatusCode.OK,
+                data: results,
+                message: "Import process completed"
+            })
+        );
+
+    } catch (error) {
+        console.error("Error in importQuestions:", error);
+        return res.status(StatusCode.INTERNAL_SERVER_ERROR).json(
+            jsonResponse({
+                code: StatusCode.INTERNAL_SERVER_ERROR,
+                data: [],
+                message: "Unexpected error occurred"
+            })
+        );
+    }
+};
