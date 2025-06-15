@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://root:@localhost:3306/quizz"
+  url      = "mysql://root:Harsh12%40@localhost:3306/quizz"
 }
 
 enum userTypeEnum {
@@ -43,7 +43,7 @@ model User {
 
 model Subject {
   id          Int         @id @default(autoincrement())
-  name        String      @unique
+  name        String      
   topics      Topic[]
   questions   Question[]
   exams       ExamSubject[]

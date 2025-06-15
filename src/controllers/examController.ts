@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import Joi from "joi";
 import { Exam, ExamBoard, StatusCode, ExamSubject } from "../types";
 import { isObjectEmpty, jsonResponse } from "../helpers";
+import { createSubjectService } from "./../services/subjectService";
 
 const prisma = new PrismaClient();
 
@@ -42,8 +43,7 @@ export const createExam = async (req: Request, res: Response) => {
 
 export const addExamSubject = async (req: Request, res: Response) => {
   try {
-const joiResult = examSubjectArraySchema.validate(req.body, { abortEarly: false });
-
+    const joiResult = examSubjectArraySchema.validate(req.body, { abortEarly: false });
     if (joiResult.error) {
       return res.status(StatusCode.BAD_REQUEST).json(
         jsonResponse<[]>({
@@ -54,11 +54,28 @@ const joiResult = examSubjectArraySchema.validate(req.body, { abortEarly: false 
       );
     }
 
-    const dataToInsert: ExamSubject[] = joiResult.value;
 
+
+    let dataToInsert: ExamSubject[] = joiResult.value;
+    let newToInsert: ExamSubject[] = [];
+
+    for (let i = 0; i < dataToInsert.length; i++) {
+      const element = dataToInsert[i];
+      if (element.subjectName) {
+        const res = await createSubjectService(element.subjectName);
+        
+        if (res.success === true && res.results.id) {
+          newToInsert.push({
+            examId: element.examId,
+            subjectId: res.results?.id
+          })
+        }
+      }
+    }
+    
     const createdSubjects = await prisma.examSubject.createMany({
-      data: dataToInsert,
-      skipDuplicates: true // optional: prevents duplicate insert errors
+      data: newToInsert,
+      // skipDuplicates: true // optional: prevents duplicate insert errors
     });
 
     res.status(StatusCode.CREATED).json(
@@ -99,7 +116,7 @@ export const getExamSubject = async (req: Request, res: Response) => {
     // Build dynamic filter
     const filter: any = {};
     if (examId) filter.examId = Number(examId);
-    if (subjectId) filter.subjectId = Number(subjectId);
+    if (subjectId) filter.subjectId = Number(subjectId); 
 
     const results = await prisma.examSubject.findMany({
       where: filter,

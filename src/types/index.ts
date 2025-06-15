@@ -63,6 +63,7 @@ export type ExamSubject = {
   id?: number;
   examId: number;
   subjectId: number;
+  subjectName?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 };

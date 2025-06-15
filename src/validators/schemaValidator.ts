@@ -53,7 +53,8 @@ export const examSchema = Joi.object<Exam>({
 export const examSubjectSchema = Joi.object<ExamSubject>({
   id: Joi.number().allow(null),
   examId: Joi.number().required(),
-  subjectId: Joi.number().required()
+  subjectId: Joi.number().allow("", null),
+  subjectName: Joi.string().allow("", null),
 }); 
  
 export const examSubjectArraySchema = Joi.array().items(examSubjectSchema).min(1);
