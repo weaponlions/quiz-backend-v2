@@ -1,16 +1,16 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import Joi from "joi";
-import { StatusCode, AnsweredQuestion } from "../types";
+import { StatusCode, AttemptAnswer } from "../types";
 import { jsonResponse, isObjectEmpty } from "../helpers";
-import { answeredQuestionSchema } from "../validators/schemaValidator";
+import { attemptAnswerSchema } from "../validators/schemaValidator";
 
 const prisma = new PrismaClient();
 
 // Create
-export const createAnsweredQuestion = async (req: Request, res: Response) => {
+export const addAttemptAnswer = async (req: Request, res: Response) => {
   try {
-    const joiResult: Joi.ValidationResult<AnsweredQuestion> = answeredQuestionSchema.validate(req.body, { abortEarly: false });
+    const joiResult: Joi.ValidationResult<AttemptAnswer> = attemptAnswerSchema.validate(req.body, { abortEarly: false });
 
     if (joiResult.error) {
       res.status(StatusCode.BAD_REQUEST).json(jsonResponse<[]>({
@@ -21,17 +21,15 @@ export const createAnsweredQuestion = async (req: Request, res: Response) => {
       return;
     }
 
-    await prisma.answeredQuestion.create({
+    await prisma.attemptAnswer.create({
       data: {
-        attemptedTestId: joiResult.value.attemptedTestId,
+        attemptId: joiResult.value.attemptId,
         questionId: joiResult.value.questionId,
-        chosenOption: joiResult.value.chosenOption ?? null,
-        correctOption: joiResult.value.correctOption,
+        selectedOption: joiResult.value.selectedOption ?? null, 
         isCorrect: joiResult.value.isCorrect,
-        attempted: joiResult.value.attempted,
       }
     }).then((value) => {
-      res.status(StatusCode.CREATED).json(jsonResponse<AnsweredQuestion[]>({
+      res.status(StatusCode.CREATED).json(jsonResponse<AttemptAnswer[]>({
         code: StatusCode.CREATED,
         data: [value],
         message: "Answer recorded successfully"
@@ -54,7 +52,7 @@ export const createAnsweredQuestion = async (req: Request, res: Response) => {
 };
 
 // Get
-export const getAnsweredQuestion = async (req: Request, res: Response) => {
+export const getAttemptAnswer = async (req: Request, res: Response) => {
   try {
     let query: { where: Object | undefined } = { where: undefined };
 
@@ -103,9 +101,9 @@ export const getAnsweredQuestion = async (req: Request, res: Response) => {
       }
     }
 
-    await prisma.answeredQuestion.findMany(typeof query.where !== "undefined" ? query as Object : {})
+    await prisma.attemptAnswer.findMany(typeof query.where !== "undefined" ? query as Object : {})
       .then((value) => {
-        res.status(StatusCode.OK).json(jsonResponse<AnsweredQuestion[]>({
+        res.status(StatusCode.OK).json(jsonResponse<AttemptAnswer[]>({
           code: StatusCode.OK,
           data: value,
           message: "Answer list"
@@ -128,54 +126,3 @@ export const getAnsweredQuestion = async (req: Request, res: Response) => {
   }
 };
 
-// Update
-export const updateAnsweredQuestion = async (req: Request, res: Response) => {
-  try {
-    const id = Number(req.params.id);
-    const { error: idError } = Joi.number().required().validate(id);
-
-    if (idError) {
-      res.status(StatusCode.BAD_REQUEST).json(jsonResponse<[]>({
-        code: StatusCode.BAD_REQUEST,
-        data: [],
-        message: "Invalid answer ID"
-      }));
-      return;
-    }
-
-    const joiResult = answeredQuestionSchema.validate(req.body, { abortEarly: false });
-    if (joiResult.error) {
-      res.status(StatusCode.BAD_REQUEST).json(jsonResponse<[]>({
-        code: StatusCode.BAD_REQUEST,
-        data: [],
-        message: joiResult.error.details
-      }));
-      return;
-    }
-
-    const updated = await prisma.answeredQuestion.update({
-      where: { id },
-      data: {
-        attemptedTestId: joiResult.value.attemptedTestId,
-        questionId: joiResult.value.questionId,
-        chosenOption: joiResult.value.chosenOption ?? null,
-        correctOption: joiResult.value.correctOption,
-        isCorrect: joiResult.value.isCorrect,
-        attempted: joiResult.value.attempted,
-      }
-    });
-
-    res.status(StatusCode.OK).json(jsonResponse<AnsweredQuestion[]>({
-      code: StatusCode.OK,
-      data: [updated],
-      message: "Answer updated successfully"
-    }));
-
-  } catch (error) {
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).json(jsonResponse<[]>({
-      code: StatusCode.INTERNAL_SERVER_ERROR,
-      data: [],
-      message: "An unexpected error occurred."
-    }));
-  }
-};

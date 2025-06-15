@@ -1,4 +1,4 @@
-import { createAttemptedTest, getAttemptedTest, updateAttemptedTest } from "../controllers/attemptedController";
+import { createAttemptedTest, getAttemptedTest, updateAttemptedTest } from "../controllers/testAttemptedController";
 import { Router } from "express";
 
 const router: Router = Router();

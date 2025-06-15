@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { examSchema } from "../validators/schemaValidator";
+import { examSchema, examSubjectArraySchema, examSubjectSchema } from "../validators/schemaValidator";
 import { PrismaClient } from "@prisma/client";
 import Joi from "joi";
-import { Exam, ExamBoard, StatusCode } from "../types";
+import { Exam, ExamBoard, StatusCode, ExamSubject } from "../types";
 import { isObjectEmpty, jsonResponse } from "../helpers";
 
 const prisma = new PrismaClient();
@@ -39,6 +39,97 @@ export const createExam = async (req: Request, res: Response) => {
     }
   }
 }
+
+export const addExamSubject = async (req: Request, res: Response) => {
+  try {
+const joiResult = examSubjectArraySchema.validate(req.body, { abortEarly: false });
+
+    if (joiResult.error) {
+      return res.status(StatusCode.BAD_REQUEST).json(
+        jsonResponse<[]>({
+          code: StatusCode.BAD_REQUEST,
+          data: [],
+          message: joiResult.error.details
+        })
+      );
+    }
+
+    const dataToInsert: ExamSubject[] = joiResult.value;
+
+    const createdSubjects = await prisma.examSubject.createMany({
+      data: dataToInsert,
+      skipDuplicates: true // optional: prevents duplicate insert errors
+    });
+
+    res.status(StatusCode.CREATED).json(
+      jsonResponse({
+        code: StatusCode.CREATED,
+        data: createdSubjects,
+        message: "Records created successfully"
+      })
+    );
+
+  } catch (error) {
+    console.error("Unexpected error in addExamSubject:", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json(
+      jsonResponse<[]>({
+        code: StatusCode.INTERNAL_SERVER_ERROR,
+        data: [],
+        message: "An unexpected error occurred."
+      })
+    );
+  }
+};
+
+export const getExamSubject = async (req: Request, res: Response) => {
+  try {
+    const { examId, subjectId } = req.query;
+
+    // Validate input
+    if (!examId && !subjectId) {
+      return res.status(StatusCode.BAD_REQUEST).json(
+        jsonResponse<[]>({
+          code: StatusCode.BAD_REQUEST,
+          data: [],
+          message: "Please provide either examId or subjectId as a query parameter."
+        })
+      );
+    }
+
+    // Build dynamic filter
+    const filter: any = {};
+    if (examId) filter.examId = Number(examId);
+    if (subjectId) filter.subjectId = Number(subjectId);
+
+    const results = await prisma.examSubject.findMany({
+      where: filter,
+      include: {
+        exam: true,     // Include full exam data
+        subject: true   // Include full subject data
+      }
+    });
+
+    res.status(StatusCode.OK).json(
+      jsonResponse({
+        code: StatusCode.OK,
+        data: results,
+        message: "Records fetched successfully"
+      })
+    );
+
+  } catch (error) {
+    console.error("Error fetching exam subjects:", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json(
+      jsonResponse<[]>({
+        code: StatusCode.INTERNAL_SERVER_ERROR,
+        data: [],
+        message: "An unexpected error occurred."
+      })
+    );
+  }
+};
+
+
 
 export const updateExam = async (req: Request<{ examId: number }>, res: Response) => {
   try {
@@ -165,6 +256,95 @@ export const getExam = async (req: Request, res: Response) => {
         code: StatusCode.INTERNAL_SERVER_ERROR,
         data: [],
         message: "An unexpected error occurred.",
+      })
+    );
+  }
+};
+
+
+
+export const deleteExamSubject = async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(StatusCode.BAD_REQUEST).json(
+        jsonResponse<[]>({
+          code: StatusCode.BAD_REQUEST,
+          data: [],
+          message: "Please provide an array of IDs to delete."
+        })
+      );
+    }
+
+    const deleted = await prisma.examSubject.deleteMany({
+      where: {
+        id: {
+          in: ids
+        }
+      }
+    });
+
+    res.status(StatusCode.OK).json(
+      jsonResponse({
+        code: StatusCode.OK,
+        data: deleted,
+        message: `${deleted.count} record(s) deleted successfully.`
+      })
+    );
+  } catch (error) {
+    console.error("Bulk delete failed:", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json(
+      jsonResponse<[]>({
+        code: StatusCode.INTERNAL_SERVER_ERROR,
+        data: [],
+        message: "An unexpected error occurred."
+      })
+    );
+  }
+};
+
+
+export const updateExamSubject = async (req: Request, res: Response) => {
+  try {
+    const updates: Array<{ id: number; examId?: number; subjectId?: number }> = req.body;
+
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(StatusCode.BAD_REQUEST).json(
+        jsonResponse<[]>({
+          code: StatusCode.BAD_REQUEST,
+          data: [],
+          message: "Please provide an array of updates with ID and fields to update."
+        })
+      );
+    }
+
+    const updatedRecords = await Promise.all(
+      updates.map(({ id, examId, subjectId }) =>
+        prisma.examSubject.update({
+          where: { id },
+          data: {
+            ...(examId !== undefined && { examId }),
+            ...(subjectId !== undefined && { subjectId })
+          }
+        })
+      )
+    );
+
+    res.status(StatusCode.OK).json(
+      jsonResponse({
+        code: StatusCode.OK,
+        data: updatedRecords,
+        message: "Records updated successfully"
+      })
+    );
+  } catch (error) {
+    console.error("Bulk update failed:", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json(
+      jsonResponse<[]>({
+        code: StatusCode.INTERNAL_SERVER_ERROR,
+        data: [],
+        message: "An unexpected error occurred."
       })
     );
   }

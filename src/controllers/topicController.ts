@@ -4,7 +4,9 @@ import { PrismaClient } from "@prisma/client";
 import Joi from "joi";
 import { StatusCode, Topic } from "../types";
 import { isObjectEmpty, jsonResponse } from "../helpers";
+
 const prisma = new PrismaClient();
+
 export const createTopic = async (req: Request, res: Response) => {
     try {
         const prisma = new PrismaClient();

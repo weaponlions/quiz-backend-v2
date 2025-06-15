@@ -49,10 +49,15 @@ export const examSchema = Joi.object<Exam>({
   isActive: Joi.boolean().default(true)
 });
 
+
 export const examSubjectSchema = Joi.object<ExamSubject>({
+  id: Joi.number().allow(null),
   examId: Joi.number().required(),
   subjectId: Joi.number().required()
-});
+}); 
+ 
+export const examSubjectArraySchema = Joi.array().items(examSubjectSchema).min(1);
+
 
 export const testSchema = Joi.object<Test>({
   name: Joi.string().required(),

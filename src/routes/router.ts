@@ -2,10 +2,8 @@ import { Router } from "express"
 import examRoutes from "./examRoutes";
 import subjectRoutes from "./subjectRoutes";
 import topicRoutes from "./topicRoutes";
-import roundRoutes from "./roundRoutes";
 import questionRoutes from "./questionRoutes";
-import userRoutes from "./userRoutes";
-import newQuestionRoutes from "./newQuestionRoutes";
+import userRoutes from "./userRoutes"; 
 import questionTranslationRoutes from "./questionTranslationRoutes";
 import testRoutes from "./testRoutes";
 import testQuestionRoutes from "./testQuestionRoutes";
@@ -17,15 +15,14 @@ const router = Router();
 router.use("/exam", examRoutes);
 router.use("/subject", subjectRoutes);
 router.use("/topic", topicRoutes);
-router.use("/round", roundRoutes);
 // router.use("/question", questionRoutes);
 router.use("/user", userRoutes);
 
 // New routes
-router.use("/question", newQuestionRoutes);
+router.use("/question", questionRoutes);
 router.use("/question-translation", questionTranslationRoutes);
-router.use("/tests", testRoutes);
-router.use("/test-questions", testQuestionRoutes);
-router.use("/test-attempts", testAttemptRoutes);
+router.use("/test", testRoutes);
+router.use("/test-question", testQuestionRoutes);
+router.use("/test-attempt", testAttemptRoutes);
 
 export default router;

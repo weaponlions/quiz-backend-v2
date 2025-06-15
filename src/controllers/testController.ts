@@ -107,11 +107,19 @@ export const createTest = async (req: Request, res: Response) => {
 
 export const getTests = async (req: Request, res: Response) => {
     try {
-        const { examId, subjectId, topicId, isLive } = req.query;
+        const { testId, examId, subjectId, topicId, isLive, withQuestion } = req.query;
         
         let whereClause: any = {};
+        let withTestQuestion: boolean = true;
 
         // Build the where clause based on provided query parameters
+        if (testId) {
+            const { error, value } = Joi.number().validate(testId);
+            if (!error) {
+                whereClause.id = Number(value);
+            }
+        }
+                
         if (examId) {
             const { error, value } = Joi.number().validate(examId);
             if (!error) {
@@ -138,7 +146,14 @@ export const getTests = async (req: Request, res: Response) => {
             if (!error) {
                 whereClause.isLive = value;
             }
-        }
+        } 
+
+        if (withQuestion !== undefined) {
+            const { error, value } = Joi.boolean().truthy("true").falsy("false").validate(withQuestion === 'true');
+            if (!error) {
+                withTestQuestion = value;
+            }
+        } 
 
         const tests = await prisma.test.findMany({
             where: whereClause,
@@ -146,6 +161,19 @@ export const getTests = async (req: Request, res: Response) => {
                 exam: true,
                 subject: true,
                 topic: true,
+                testQuestions: withTestQuestion === true ? {
+                    include: {
+                        question: {
+                            include: {
+                                translations: {
+                                    where: {
+                                        language: 'en'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } : false,
                 _count: {
                     select: {
                         testQuestions: true,

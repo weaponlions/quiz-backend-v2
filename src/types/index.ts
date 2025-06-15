@@ -129,8 +129,8 @@ export type AttemptAnswer = {
   id?: number;
   attemptId: number;
   questionId: number;
-  selectedOption?: correctAnswerEnum;
-  isCorrect?: boolean;
+  selectedOption?: correctAnswerEnum | null;
+  isCorrect?: boolean | null;
 };
 
 export type UserQuestionLog = {
@@ -150,6 +150,16 @@ export type QuestionPool = {
   createdAt?: Date;
   updatedAt?: Date;
 };
+
+export type AttemptedTest = {  
+  id?: number;
+  testId: number;
+  userId: number;
+  startedAt?: Date | null;
+  submittedAt?: Date | null;
+  score?: number | null;
+}
+
 
 export enum StatusCode {
     // Informational Responses (100–199)
